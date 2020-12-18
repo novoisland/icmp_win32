@@ -11,13 +11,13 @@ Download the win32 Tiny C Compiler (TCC) from [here](https://bellard.org/tcc/) a
 
 export library def file
 
-    tcc -impdef ws2_32.dll  
-    tcc -impdef iphlpapi.dll  
+    tcc -impdef ws2_32.dll
+    tcc -impdef iphlpapi.dll
 
 build the binary
 
-    tcc icmp_recv.c ws2_32.def  
-    tcc icmp_send.c ws2_32.def iphlpapi.def  
+    tcc icmp_recv.c ws2_32.def
+    tcc icmp_send.c ws2_32.def iphlpapi.def
 
 ## Usage
 
