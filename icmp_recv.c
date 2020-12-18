@@ -33,23 +33,23 @@ struct iphdr
 
 struct icmphdr
 {
-	u_int8_t type;		/* message type */
-	u_int8_t code;		/* type sub-code */
-	u_int16_t checksum;
-	union
-	{
-		struct
-		{
-			u_int16_t	id;
-			u_int16_t	sequence;
-		} echo;			/* echo datagram */
-		u_int32_t	gateway;	/* gateway address */
-		struct
-		{
-			u_int16_t	__unused;
-			u_int16_t	mtu;
-		} frag;			/* path mtu discovery */
-	} un;
+  u_int8_t type;    /* message type */
+  u_int8_t code;    /* type sub-code */
+  u_int16_t checksum;
+  union
+  {
+    struct
+    {
+      u_int16_t  id;
+      u_int16_t  sequence;
+    } echo;      /* echo datagram */
+    u_int32_t  gateway;  /* gateway address */
+    struct
+    {
+      u_int16_t  __unused;
+      u_int16_t  mtu;
+    } frag;      /* path mtu discovery */
+  } un;
 };
 
 struct msghdr
@@ -57,8 +57,8 @@ struct msghdr
   uint32_t  magic;
   uint8_t   type;
   uint8_t   code;
-	uint16_t	id;
-  uint32_t	sequence;
+  uint16_t  id;
+  uint32_t  sequence;
 };
 
 #define ICMP_MSG_NUM  0x00709394
@@ -81,15 +81,15 @@ int main(int argc, char *argv[])
   struct icmphdr *icmp = (struct icmphdr *) (packet + sizeof (struct iphdr));
   struct msghdr *msg = (struct msghdr *) (packet + sizeof (struct iphdr) + sizeof (struct icmphdr));
 
-	//Initialise Winsock
-	WSADATA wsock;
-	if (WSAStartup(MAKEWORD(2,2),&wsock) != 0)
-	{
-		fprintf(stderr, "WSAStartup() failed with error code %d\n", WSAGetLastError());
-		return -1;
-	}
-	
-	//Create Raw ICMP socket
+  //Initialise Winsock
+  WSADATA wsock;
+  if (WSAStartup(MAKEWORD(2,2),&wsock) != 0)
+  {
+    fprintf(stderr, "WSAStartup() failed with error code %d\n", WSAGetLastError());
+    return -1;
+  }
+  
+  //Create Raw ICMP socket
   if ( (sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == SOCKET_ERROR)
   {
     fprintf(stderr, "socket() failed with error code %d\n", WSAGetLastError());
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "WSAIotcl(%u) failed with error code %d\n", SIO_RCVALL, WSAGetLastError());
     return -1;
   }
-	
+  
   while(1) {
     if ((read_size = recvfrom(sockfd, packet, packet_size, 0, NULL, NULL)) == SOCKET_ERROR)
     {
@@ -200,6 +200,6 @@ int main(int argc, char *argv[])
       break;
     }
   }
-	
-	return 0;
+  
+  return 0;
 }
