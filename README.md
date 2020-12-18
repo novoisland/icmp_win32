@@ -1,5 +1,5 @@
 # icmp_win32
-a simple message and file transfer program via ICMP for windows
+a simple message and file transfer program via ICMP for windows POC
 
 ## Feature
 - It can send either message or file.
