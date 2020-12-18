@@ -7,7 +7,7 @@ a simple message and file transfer program via ICMP for windows
 - The sender program do not require privilege, as it does not create raw socket, however the receiver program may still need privilege for windows 7 or earlier.
 
 ## Build
-Download the win32 tcc from [here](https://bellard.org/tcc/) and the full winapi package, extract them into same directory.
+Download the win32 Tiny C Compiler (TCC) from [here](https://bellard.org/tcc/) and the full winapi package, extract them into same directory.
 
 export library def file
 
