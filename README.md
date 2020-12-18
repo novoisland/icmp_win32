@@ -1,5 +1,5 @@
 # icmp_win32
-a simple message and file transfer program via ICMP for windows POC
+a simple message and file transfer program via ICMP for windows (POC)
 
 ## Feature
 - It should work on from Windows XP to Windows 10.
@@ -9,7 +9,7 @@ a simple message and file transfer program via ICMP for windows POC
 - Speed is not so optimized.
 
 ## Build
-Download the win32 Tiny C Compiler (TCC) from [here](http://savannah.nongnu.org/projects/tinycc) and the full winapi package, extract them into same directory.
+Download the win32 Tiny C Compiler (TCC) from [here](https://savannah.nongnu.org/projects/tinycc) and the full winapi package, extract them into same directory.
 
 create library def file
 
