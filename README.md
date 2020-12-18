@@ -2,6 +2,7 @@
 a simple message and file transfer program via ICMP for windows POC
 
 ## Feature
+- It should work on from Windows XP to Windows 10.
 - It can send either message or file.
 - It is single direction (sender -> receiver), and no any feedback from receiver.
 - The sender program do not require privilege, as it does not create raw socket, however the receiver program may still need privilege for windows 7 or earlier.
