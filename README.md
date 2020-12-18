@@ -9,13 +9,15 @@ a simple message and file transfer program via ICMP for windows
 ## Build
 Download the win32 tcc from [here](https://bellard.org/tcc/) and the full winapi package, extract them into same directory.
 
-export library def file  
-tcc -impdef ws2_32.dll  
-tcc -impdef iphlpapi.dll  
+export library def file
 
-build the binary  
-tcc icmp_recv.c ws2_32.def  
-tcc icmp_send.c ws2_32.def iphlpapi.def  
+    tcc -impdef ws2_32.dll  
+    tcc -impdef iphlpapi.dll  
+
+build the binary
+
+    tcc icmp_recv.c ws2_32.def  
+    tcc icmp_send.c ws2_32.def iphlpapi.def  
 
 ## Usage
 
