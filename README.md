@@ -9,7 +9,7 @@ a simple message and file transfer program via ICMP for windows POC
 ## Build
 Download the win32 Tiny C Compiler (TCC) from [here](http://savannah.nongnu.org/projects/tinycc) and the full winapi package, extract them into same directory.
 
-export library def file
+create library def file
 
     tcc -impdef ws2_32.dll
     tcc -impdef iphlpapi.dll
