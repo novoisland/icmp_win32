@@ -8,11 +8,11 @@
 
 struct msghdr
 {
-  uint32_t magic;
-  uint8_t type;
-  uint8_t code;
-	uint16_t	id;
-  uint32_t	sequence;
+  uint32_t  magic;
+  uint8_t   type;
+  uint8_t   code;
+  uint16_t  id;
+  uint32_t  sequence;
 };
 
 #define ICMP_MSG_NUM  0x00709394
