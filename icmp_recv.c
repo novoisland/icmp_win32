@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
   //set socket to receive all packets
   if (WSAIoctl(sockfd, SIO_RCVALL, &optval, sizeof(optval), NULL, 0, &dwBytesRet, NULL, NULL) == SOCKET_ERROR)
   {
-    fprintf(stderr, "WSAIotcl(%u) failed with error code %d\n", SIO_RCVALL, WSAGetLastError());
+    fprintf(stderr, "WSAIotcl(SIO_RCVALL) failed with error code %d\n", WSAGetLastError());
     return -1;
   }
   
