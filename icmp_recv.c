@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
   }
   
   //Create Raw ICMP socket
-  if ( (sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == SOCKET_ERROR)
+  if ( (sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET )
   {
     fprintf(stderr, "socket() failed with error code %d\n", WSAGetLastError());
     return -1;
