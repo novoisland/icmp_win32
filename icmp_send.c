@@ -1,4 +1,4 @@
-#include <winsock2.h>
+#include <winsock.h>
 #include <iphlpapi.h>
 #include <icmpapi.h>
 #include <stdio.h>
