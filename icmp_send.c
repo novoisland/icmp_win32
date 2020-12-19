@@ -81,7 +81,7 @@ int main(int argc, char **argv)  {
       }
       dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr) + strlen(argv[3])+1, NULL, ReplyBuffer, ReplySize, 1000);
       msg->code=1;
-      while((readSize = fread(payload, 1, icmp_payload_size - sizeof (struct msghdr), file)) != 0) {
+      while((readSize = fread(payload, 1, icmp_payload_size - sizeof (struct msghdr), file)) > 0) {
         msg->sequence++;
         dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr) + readSize, NULL, ReplyBuffer, ReplySize, 10);
         if (dwRetVal > 0)
