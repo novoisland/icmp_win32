@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
   //bind socket with ip
   if ( bind(sockfd, (SOCKADDR *) &if0, sizeof (if0)) == SOCKET_ERROR )
   {
-    fprintf(stderr, "Failed to bind socket %d\n", WSAGetLastError());
+    fprintf(stderr, "Failed to bind socket with error %d\n", WSAGetLastError());
     return -1;
   }
   
