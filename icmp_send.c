@@ -85,9 +85,9 @@ int main(int argc, char **argv)  {
         msg->sequence++;
         dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr) + readSize, NULL, ReplyBuffer, ReplySize, 10);
         if (dwRetVal > 0)
-          printf("sent package seq %d data size %d, return %d\r", msg->sequence, readSize, dwRetVal);
+          printf("sent package seq %d data size %d, return %d    \r", msg->sequence, readSize, dwRetVal);
         else
-          printf("sent package seq %d data size %d, return %d\n", msg->sequence, readSize, dwRetVal);
+          printf("sent package seq %d data size %d, return %d    \n", msg->sequence, readSize, dwRetVal);
       }
       msg->code=2;
       dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr), NULL, ReplyBuffer, ReplySize, 1000);
