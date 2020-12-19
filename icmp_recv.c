@@ -156,8 +156,8 @@ int main(int argc, char *argv[])
       switch (msg->code) {
       case 0:
         if (msg->sequence <= seq) break;
-        if ( (filename = strrchr(payload, '/')) != NULL ) filename++;
-        else if ( (filename = strrchr(payload, '\\')) != NULL ) filename++;
+        if (filename = strrchr(payload, '/')) filename++;
+        else if (filename = strrchr(payload, '\\')) filename++;
         else filename = payload;
         printf("receive file '%s' from %s\n",filename,inet_ntoa((struct in_addr)ip->saddr));
         if (file) fclose(file);
