@@ -1,4 +1,4 @@
-#include <winsock.h>
+#include <winsock2.h>
 #include <mstcpip.h>
 #include <stdio.h>
  
