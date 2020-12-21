@@ -7,6 +7,7 @@ a simple message and file transfer program via ICMP for windows (POC)
 - It is single direction (sender -> receiver), and no any feedback from receiver.
 - The sender program does not require privilege, as it does not create raw socket, however the receiver program may still need privilege for windows 7 or earlier.
 - Speed is not so optimized.
+- The receiver can handle only one file transfer at a time, do not try to send multiple files at same time.
 
 ## Build
 Download the win32 Tiny C Compiler (TCC) from [here](https://savannah.nongnu.org/projects/tinycc) and the full winapi package, extract them into same directory.
