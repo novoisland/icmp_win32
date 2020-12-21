@@ -31,10 +31,10 @@ or if there are multiple IP addresses
 
     icmp_recv <IP address>
 
-send message to receiver
+send message to receiver, 1 stands for message type
 
     icmp_send <IP address> 1 <message content>
 
-send file to receiver
+send file to receiver, 2 stands for file transfer
 
     icmp_send <IP address> 2 <file path>
