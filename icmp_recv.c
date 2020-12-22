@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   FILE *file = NULL;
   SOCKET sockfd;
 
-  if ( (packet = malloc(packet_size)) == NULL)
+  if ( (packet = malloc(packet_size)) == NULL )
   {
     fprintf(stderr, "Could not allocate memory for packet\n");
     return -1;
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
         else filename = payload;
         printf("receive file '%s' from %s\n",filename,inet_ntoa((struct in_addr)ip->saddr));
         if (file) fclose(file);
-        if ( (file = fopen(filename, "wb+")) == NULL) {
+        if ( (file = fopen(filename, "wb+")) == NULL ) {
           printf("unable to open file for write");
           seq = 0;
           break;
@@ -169,15 +169,13 @@ int main(int argc, char *argv[])
         seq = msg->sequence;
         break;
       case 1:
-        if (!file) break;
+        if (file == NULL) break;
         if (msg->sequence <= seq) break;
         if (msg->sequence != seq + 1) {
           printf("message is interrupted, please send file again\n");
-          if (file) {
-            fclose(file);
-            file = NULL;
-            seq = 0;
-          }
+          fclose(file);
+          file = NULL;
+          seq = 0;
           break;
         }
         //printf("write seq %d size %d\n", msg->sequence, payload_size);
@@ -186,7 +184,7 @@ int main(int argc, char *argv[])
         seq = msg->sequence;
         break;
       case 2:
-        if (!file) break;
+        if (file == NULL) break;
         printf("receive done\n");
         fclose(file);
         file = NULL;
