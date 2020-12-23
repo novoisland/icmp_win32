@@ -68,7 +68,7 @@ int main(int argc, char **argv)  {
     msg->code=0;
     msg->id=time(NULL);
     msg->sequence=1;
-    strcpy(payload, argv[3]);
+    strncpy_s(payload, icmp_payload_size-sizeof (struct msghdr), argv[3], _TRUNCATE);
 
     switch (msg->type) {
     case 1:
