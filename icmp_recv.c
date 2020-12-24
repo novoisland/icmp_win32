@@ -59,18 +59,21 @@ struct msghdr
   uint8_t   code;
   uint16_t  id;
   uint32_t  sequence;
+  uint32_t  v1;
 };
 
 #define ICMP_MSG_NUM  0x00709394
 
 int main(int argc, char *argv[])
 {
-  int recvPayloadSize, recvBufferSize = 32768;
-  char *recvPayload, *recvBuffer, *filename;
+  int recvPayloadSize, recvBufferSize = 32768, wBufferSize = 1024 * 512, wBufferPos = 0;
+  char *recvPayload, *recvBuffer, *filename, *wBuffer;
   int ihl, readSize;
   uint32_t seq = 0;
   FILE *file = NULL;
   SOCKET sockfd;
+  struct chain *bufferChain;
+  fpos_t fPos;
 
   if ( (recvBuffer = malloc(recvBufferSize)) == NULL )
   {
@@ -80,6 +83,12 @@ int main(int argc, char *argv[])
   struct iphdr *ip = (struct iphdr *) recvBuffer;
   struct icmphdr *icmp = (struct icmphdr *) (recvBuffer + sizeof (struct iphdr));
   struct msghdr *msg = (struct msghdr *) (recvBuffer + sizeof (struct iphdr) + sizeof (struct icmphdr));
+  
+  if ( (wBuffer = malloc(wBufferSize)) == NULL )
+  {
+    fprintf(stderr, "Could not allocate memory for wBuffer\n");
+    return 1;
+  }
 
   //Initialise Winsock
   WSADATA wsock;
@@ -133,7 +142,7 @@ int main(int argc, char *argv[])
   }
   
   while(1) {
-    if ((readSize = recvfrom(sockfd, recvBuffer, recvBufferSize, 0, NULL, NULL)) == SOCKET_ERROR)
+    if ((readSize = recv(sockfd, recvBuffer, recvBufferSize, 0)) == SOCKET_ERROR)
     {
       fprintf(stderr, "Failed to receive packets with error %d\n", WSAGetLastError());
       return 1;
@@ -168,28 +177,65 @@ int main(int argc, char *argv[])
           break;
         }
         seq = msg->sequence;
+        wBufferPos = 0;
         break;
       case 1:
+        //printf("got seq %d curr %d\n", msg->sequence, seq);
         if (file == NULL) break;
         if (msg->sequence <= seq) break;
         if (msg->sequence != seq + 1) {
-          printf("message is interrupted, please send file again\n");
+          fgetpos(file, &fPos);
+          printf("expect seq %d got %d, please send file again from %d\n", seq+1, msg->sequence, fPos);
           fclose(file);
           file = NULL;
           seq = 0;
           break;
         }
         //printf("write seq %d size %d\n", msg->sequence, recvPayloadSize);
-        fwrite(recvPayload, recvPayloadSize, 1, file);
-        //fflush(file);
-        seq = msg->sequence;
+        if (wBufferPos + recvPayloadSize > wBufferSize) {
+          fwrite(wBuffer, wBufferPos, 1, file);
+          memcpy(wBuffer, recvPayload, recvPayloadSize);
+          wBufferPos = recvPayloadSize;
+        } else {
+          memcpy(wBuffer + wBufferPos, recvPayload, recvPayloadSize);
+          wBufferPos = wBufferPos + recvPayloadSize;
+        }
+        seq++;
         break;
       case 2:
         if (file == NULL) break;
-        printf("receive done\n");
+        if (wBufferPos + recvPayloadSize > wBufferSize) {
+          fwrite(wBuffer, wBufferPos, 1, file);
+          fwrite(recvPayload, recvPayloadSize, 1, file);
+        } else {
+          memcpy(wBuffer + wBufferPos, recvPayload, recvPayloadSize);
+          wBufferPos = wBufferPos + recvPayloadSize;
+          fwrite(wBuffer, wBufferPos, 1, file);
+        }
         fclose(file);
         file = NULL;
         seq = 0;
+        printf("receive done\n");
+        break;
+      case 3:
+        if (msg->sequence <= seq) break;
+        if (filename = strrchr(recvPayload, '/')) filename++;
+        else if (filename = strrchr(recvPayload, '\\')) filename++;
+        else filename = recvPayload;
+        printf("receive file '%s' from %s start at %d\n",filename,inet_ntoa((struct in_addr)ip->saddr),msg->v1);
+        if (file) fclose(file);
+        if ( (file = fopen(filename, "rb+")) == NULL ) {
+          printf("file not exists or unable to open file\n");
+          seq = 0;
+          break;
+        }
+        if (fseek(file, msg->v1, SEEK_SET) != 0) {
+          printf("unable to seek file\n");
+          seq = 0;
+          break;
+        }
+        seq = msg->sequence;
+        wBufferPos = 0;
         break;
       default:
         break;
