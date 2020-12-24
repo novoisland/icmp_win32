@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 {
   int recvPayloadSize, recvBufferSize = 32768;
   char *recvPayload, *recvBuffer, *filename;
-  int ihl, read_size;
+  int ihl, readSize;
   uint32_t seq = 0;
   FILE *file = NULL;
   SOCKET sockfd;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   if ( (recvBuffer = malloc(recvBufferSize)) == NULL )
   {
     fprintf(stderr, "Could not allocate memory for recvBuffer\n");
-    return -1;
+    return 1;
   }
   struct iphdr *ip = (struct iphdr *) recvBuffer;
   struct icmphdr *icmp = (struct icmphdr *) (recvBuffer + sizeof (struct iphdr));
@@ -86,14 +86,14 @@ int main(int argc, char *argv[])
   if (WSAStartup(MAKEWORD(2,2),&wsock) != 0)
   {
     fprintf(stderr, "WSAStartup() failed with error code %d\n", WSAGetLastError());
-    return -1;
+    return 1;
   }
   
   //Create Raw ICMP socket
   if ( (sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET )
   {
     fprintf(stderr, "socket() failed with error code %d\n", WSAGetLastError());
-    return -1;
+    return 1;
   }
   
   DWORD dwBytesRet;
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     if (WSAIoctl(sockfd, SIO_ADDRESS_LIST_QUERY, NULL, 0, recvBuffer, recvBufferSize, &dwBytesRet, NULL, NULL) == SOCKET_ERROR)
     {
         fprintf(stderr, "WSAIoctl(SIO_ADDRESS_LIST_QUERY) failed with error code %d\n", WSAGetLastError());
-        return -1;
+        return 1;
     }
     slist = (SOCKET_ADDRESS_LIST *)recvBuffer;
     if0 = *(struct sockaddr_in *)slist->Address[0].lpSockaddr;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
   if ( bind(sockfd, (SOCKADDR *) &if0, sizeof (if0)) == SOCKET_ERROR )
   {
     fprintf(stderr, "Failed to bind socket with error %d\n", WSAGetLastError());
-    return -1;
+    return 1;
   }
   
   DWORD optval = RCVALL_ON;
@@ -129,22 +129,22 @@ int main(int argc, char *argv[])
   if (WSAIoctl(sockfd, SIO_RCVALL, &optval, sizeof(optval), NULL, 0, &dwBytesRet, NULL, NULL) == SOCKET_ERROR)
   {
     fprintf(stderr, "WSAIotcl(SIO_RCVALL) failed with error code %d\n", WSAGetLastError());
-    return -1;
+    return 1;
   }
   
   while(1) {
-    if ((read_size = recvfrom(sockfd, recvBuffer, recvBufferSize, 0, NULL, NULL)) == SOCKET_ERROR)
+    if ((readSize = recvfrom(sockfd, recvBuffer, recvBufferSize, 0, NULL, NULL)) == SOCKET_ERROR)
     {
       fprintf(stderr, "Failed to receive packets with error %d\n", WSAGetLastError());
-      return -1;
+      return 1;
     }
     ihl = (int)ip->ihl << 2;
     icmp = (struct icmphdr *)(recvBuffer + ihl);
     msg = (struct msghdr *)(recvBuffer + ihl + sizeof (struct icmphdr));
-    //printf("src: %s, id: %x, seq: %x, all: %d\n", inet_ntoa((struct in_addr)ip->saddr), ntohs(icmp->un.echo.id), ntohs(icmp->un.echo.sequence), read_size);
-    if ( read_size - ihl - sizeof (struct icmphdr) <= 0 ) continue;
+    //printf("src: %s, id: %x, seq: %x, all: %d\n", inet_ntoa((struct in_addr)ip->saddr), ntohs(icmp->un.echo.id), ntohs(icmp->un.echo.sequence), readSize);
+    if ( readSize - ihl - sizeof (struct icmphdr) <= 0 ) continue;
     if ( msg->magic != ICMP_MSG_NUM ) continue;
-    recvPayloadSize = read_size - ihl - sizeof (struct icmphdr) - sizeof (struct msghdr);
+    recvPayloadSize = readSize - ihl - sizeof (struct icmphdr) - sizeof (struct msghdr);
     if (recvPayloadSize < 0) continue;
     recvPayload = (char *)(recvBuffer + ihl + sizeof (struct icmphdr) + sizeof (struct msghdr));
     //printf("msg type: %x, code: %x, id: %d, seq: %d, payload: %d\n", msg->type, msg->code, msg->id, msg->sequence, recvPayloadSize);
