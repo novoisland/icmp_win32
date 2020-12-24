@@ -65,21 +65,21 @@ struct msghdr
 
 int main(int argc, char *argv[])
 {
-  int buffer_size = 8000;
-  int packet_size = sizeof (struct iphdr) + sizeof (struct icmphdr) + buffer_size;
-  int ihl, read_size, payload_size, seq = 0;
-  char *packet, *payload, *filename;
+  int recvPayloadSize, recvBufferSize = 32768;
+  char *recvPayload, *recvBuffer, *filename;
+  int ihl, read_size;
+  uint32_t seq = 0;
   FILE *file = NULL;
   SOCKET sockfd;
 
-  if ( (packet = malloc(packet_size)) == NULL )
+  if ( (recvBuffer = malloc(recvBufferSize)) == NULL )
   {
-    fprintf(stderr, "Could not allocate memory for packet\n");
+    fprintf(stderr, "Could not allocate memory for recvBuffer\n");
     return -1;
   }
-  struct iphdr *ip = (struct iphdr *) packet;
-  struct icmphdr *icmp = (struct icmphdr *) (packet + sizeof (struct iphdr));
-  struct msghdr *msg = (struct msghdr *) (packet + sizeof (struct iphdr) + sizeof (struct icmphdr));
+  struct iphdr *ip = (struct iphdr *) recvBuffer;
+  struct icmphdr *icmp = (struct icmphdr *) (recvBuffer + sizeof (struct iphdr));
+  struct msghdr *msg = (struct msghdr *) (recvBuffer + sizeof (struct iphdr) + sizeof (struct icmphdr));
 
   //Initialise Winsock
   WSADATA wsock;
@@ -107,13 +107,13 @@ int main(int argc, char *argv[])
     if0.sin_addr.s_addr = inet_addr(argv[1]);
   } else {
     //get the ip of first interface
-    if (WSAIoctl(sockfd, SIO_ADDRESS_LIST_QUERY, NULL, 0, packet, buffer_size, &dwBytesRet, NULL, NULL) == SOCKET_ERROR)
+    if (WSAIoctl(sockfd, SIO_ADDRESS_LIST_QUERY, NULL, 0, recvBuffer, recvBufferSize, &dwBytesRet, NULL, NULL) == SOCKET_ERROR)
     {
-        printf("WSAIoctl(SIO_ADDRESS_LIST_QUERY) failed with error code %d\n", WSAGetLastError());
+        fprintf(stderr, "WSAIoctl(SIO_ADDRESS_LIST_QUERY) failed with error code %d\n", WSAGetLastError());
         return -1;
     }
-    slist = (SOCKET_ADDRESS_LIST *)packet;
-    if0.sin_addr.s_addr = ((SOCKADDR_IN *)slist->Address[0].lpSockaddr)->sin_addr.s_addr;
+    slist = (SOCKET_ADDRESS_LIST *)recvBuffer;
+    if0 = *(struct sockaddr_in *)slist->Address[0].lpSockaddr;
   }
   printf("listening on ip %s\n",inet_ntoa((struct in_addr)if0.sin_addr.s_addr));
   
@@ -133,32 +133,33 @@ int main(int argc, char *argv[])
   }
   
   while(1) {
-    if ((read_size = recvfrom(sockfd, packet, packet_size, 0, NULL, NULL)) == SOCKET_ERROR)
+    if ((read_size = recvfrom(sockfd, recvBuffer, recvBufferSize, 0, NULL, NULL)) == SOCKET_ERROR)
     {
-      fprintf(stderr, "Failed to receive packets, %d\n", WSAGetLastError());
+      fprintf(stderr, "Failed to receive packets with error %d\n", WSAGetLastError());
       return -1;
     }
     ihl = (int)ip->ihl << 2;
-    icmp = (struct icmphdr *)(packet + ihl);
-    msg = (struct msghdr *)(packet + ihl + sizeof (struct icmphdr));
+    icmp = (struct icmphdr *)(recvBuffer + ihl);
+    msg = (struct msghdr *)(recvBuffer + ihl + sizeof (struct icmphdr));
     //printf("src: %s, id: %x, seq: %x, all: %d\n", inet_ntoa((struct in_addr)ip->saddr), ntohs(icmp->un.echo.id), ntohs(icmp->un.echo.sequence), read_size);
+    if ( read_size - ihl - sizeof (struct icmphdr) <= 0 ) continue;
     if ( msg->magic != ICMP_MSG_NUM ) continue;
-    payload_size = read_size - ihl - sizeof (struct icmphdr) - sizeof (struct msghdr);
-    if (payload_size < 0) continue;
-    payload = (char *)(packet + ihl + sizeof (struct icmphdr) + sizeof (struct msghdr));
-    //printf("msg type: %x, code: %x, id: %d, seq: %d, payload: %d\n", msg->type, msg->code, msg->id, msg->sequence, payload_size);
+    recvPayloadSize = read_size - ihl - sizeof (struct icmphdr) - sizeof (struct msghdr);
+    if (recvPayloadSize < 0) continue;
+    recvPayload = (char *)(recvBuffer + ihl + sizeof (struct icmphdr) + sizeof (struct msghdr));
+    //printf("msg type: %x, code: %x, id: %d, seq: %d, payload: %d\n", msg->type, msg->code, msg->id, msg->sequence, recvPayloadSize);
 
     switch (msg->type) {
     case 1:
-      printf("message from %s: %s\n",inet_ntoa((struct in_addr)ip->saddr),payload);
+      printf("message from %s: %s\n",inet_ntoa((struct in_addr)ip->saddr),recvPayload);
       break;
     case 2:
       switch (msg->code) {
       case 0:
         if (msg->sequence <= seq) break;
-        if (filename = strrchr(payload, '/')) filename++;
-        else if (filename = strrchr(payload, '\\')) filename++;
-        else filename = payload;
+        if (filename = strrchr(recvPayload, '/')) filename++;
+        else if (filename = strrchr(recvPayload, '\\')) filename++;
+        else filename = recvPayload;
         printf("receive file '%s' from %s\n",filename,inet_ntoa((struct in_addr)ip->saddr));
         if (file) fclose(file);
         if ( (file = fopen(filename, "wb+")) == NULL ) {
@@ -178,8 +179,8 @@ int main(int argc, char *argv[])
           seq = 0;
           break;
         }
-        //printf("write seq %d size %d\n", msg->sequence, payload_size);
-        fwrite(payload, payload_size, 1, file);
+        //printf("write seq %d size %d\n", msg->sequence, recvPayloadSize);
+        fwrite(recvPayload, recvPayloadSize, 1, file);
         //fflush(file);
         seq = msg->sequence;
         break;
