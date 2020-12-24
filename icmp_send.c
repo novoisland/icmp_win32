@@ -20,22 +20,19 @@ struct msghdr
 int main(int argc, char **argv)  {
 
     // Declare and initialize variables
-    int icmp_payload_size = 1470;  //1500 - 20 - 8 - 2
+    int readSize, sendBufferSize = 1470;  //1500 - 20 - 8 - 2
     HANDLE hIcmpFile;
-    unsigned long ipaddr = INADDR_NONE;
-    DWORD dwRetVal = 0;
-    int readSize;
-    LPVOID ReplyBuffer = NULL;
-    DWORD ReplySize = 0;
+    uint32_t ipaddr = INADDR_NONE;
+    DWORD dwRetVal = 0, ReplySize = 0;
     FILE *file = NULL;
-    char *SendData;
-    SendData = malloc(icmp_payload_size);
-    if (SendData == NULL) {
+    char *ReplyBuffer, *sendBuffer;
+    sendBuffer = malloc(sendBufferSize);
+    if (sendBuffer == NULL) {
         printf("\tUnable to allocate memory\n");
         return 1;
     }
-    struct msghdr *msg = (struct msghdr *) SendData;
-    char *payload = (char *)(SendData + sizeof (struct msghdr));
+    struct msghdr *msg = (struct msghdr *) sendBuffer;
+    char *sendPayload = (char *)(sendBuffer + sizeof (struct msghdr));
     
     // Validate the parameters
     if (argc < 4) {
@@ -51,13 +48,12 @@ int main(int argc, char **argv)  {
     
     hIcmpFile = IcmpCreateFile();
     if (hIcmpFile == INVALID_HANDLE_VALUE) {
-        printf("\tUnable to open handle.\n");
         printf("IcmpCreatefile returned error: %ld\n", GetLastError() );
         return 1;
     }
 
-    ReplySize = sizeof(ICMP_ECHO_REPLY) + icmp_payload_size;
-    ReplyBuffer = (VOID*) malloc(ReplySize);
+    ReplySize = sizeof(ICMP_ECHO_REPLY) + sendBufferSize;
+    ReplyBuffer = malloc(ReplySize);
     if (ReplyBuffer == NULL) {
         printf("\tUnable to allocate memory\n");
         return 1;
@@ -66,31 +62,31 @@ int main(int argc, char **argv)  {
     msg->magic=ICMP_MSG_NUM;
     msg->type=atoi(argv[2]);
     msg->code=0;
-    msg->id=time(NULL);
+    msg->id=GetTickCount();
     msg->sequence=1;
-    strncpy_s(payload, icmp_payload_size-sizeof (struct msghdr), argv[3], _TRUNCATE);
+    strncpy_s(sendPayload, sendBufferSize-sizeof (struct msghdr), argv[3], _TRUNCATE);
 
     switch (msg->type) {
     case 1:
-      dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr) + strlen(argv[3])+1, NULL, ReplyBuffer, ReplySize, 1000);
+      dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, sendBuffer, sizeof (struct msghdr) + strlen(argv[3])+1, NULL, ReplyBuffer, ReplySize, 1000);
       break;
     case 2:
       if ( (file = fopen(argv[3], "rb")) == NULL ) {
         printf("unable to open file '%s'", argv[3]);
         break;
       }
-      dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr) + strlen(argv[3])+1, NULL, ReplyBuffer, ReplySize, 1000);
+      dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, sendBuffer, sizeof (struct msghdr) + strlen(argv[3])+1, NULL, ReplyBuffer, ReplySize, 1000);
       msg->code=1;
-      while((readSize = fread(payload, 1, icmp_payload_size - sizeof (struct msghdr), file)) > 0) {
+      while((readSize = fread(sendPayload, 1, sendBufferSize - sizeof (struct msghdr), file)) > 0) {
         msg->sequence++;
-        dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr) + readSize, NULL, ReplyBuffer, ReplySize, 10);
+        dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, sendBuffer, sizeof (struct msghdr) + readSize, NULL, ReplyBuffer, ReplySize, 10);
         if (dwRetVal > 0)
           printf("sent package seq %d data size %d, return %d    \r", msg->sequence, readSize, dwRetVal);
         else
           printf("sent package seq %d data size %d, return %d    \n", msg->sequence, readSize, dwRetVal);
       }
       msg->code=2;
-      dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof (struct msghdr), NULL, ReplyBuffer, ReplySize, 1000);
+      dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, sendBuffer, sizeof (struct msghdr), NULL, ReplyBuffer, ReplySize, 1000);
       break;
     default:
       break;
