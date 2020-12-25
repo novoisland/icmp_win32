@@ -59,7 +59,6 @@ struct msghdr
   uint8_t   code;
   uint16_t  id;
   uint32_t  sequence;
-  uint32_t  v1;
 };
 
 #define ICMP_MSG_NUM  0x00709394
@@ -69,7 +68,7 @@ int main(int argc, char *argv[])
   int recvPayloadSize, recvBufferSize = 32768, wBufferSize = 1024 * 512, wBufferPos = 0;
   char *recvPayload, *recvBuffer, *filename, *wBuffer;
   int ihl, readSize;
-  uint32_t seq = 0;
+  uint32_t seq = 0, offset = 0;
   FILE *file = NULL;
   SOCKET sockfd;
   struct chain *bufferChain;
@@ -147,6 +146,7 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Failed to receive packets with error %d\n", WSAGetLastError());
       return 1;
     }
+    if (ip->saddr == if0.sin_addr.s_addr && ip->daddr != if0.sin_addr.s_addr) continue;
     ihl = (int)ip->ihl << 2;
     icmp = (struct icmphdr *)(recvBuffer + ihl);
     msg = (struct msghdr *)(recvBuffer + ihl + sizeof (struct icmphdr));
@@ -160,11 +160,13 @@ int main(int argc, char *argv[])
 
     switch (msg->type) {
     case 1:
+      if (recvPayloadSize < 1) break;
       printf("message from %s: %s\n",inet_ntoa((struct in_addr)ip->saddr),recvPayload);
       break;
     case 2:
       switch (msg->code) {
       case 0:
+        if (recvPayloadSize < 2) break;
         if (msg->sequence <= seq) break;
         if (filename = strrchr(recvPayload, '/')) filename++;
         else if (filename = strrchr(recvPayload, '\\')) filename++;
@@ -181,9 +183,11 @@ int main(int argc, char *argv[])
         break;
       case 1:
         //printf("got seq %d curr %d\n", msg->sequence, seq);
+        if (recvPayloadSize < 1) break;
         if (file == NULL) break;
         if (msg->sequence <= seq) break;
         if (msg->sequence != seq + 1) {
+          if (wBufferPos) fwrite(wBuffer, wBufferPos, 1, file);
           fgetpos(file, &fPos);
           printf("expect seq %d got %d, please send file again from %d\n", seq+1, msg->sequence, fPos);
           fclose(file);
@@ -218,18 +222,20 @@ int main(int argc, char *argv[])
         printf("receive done\n");
         break;
       case 3:
+        if (recvPayloadSize < sizeof(offset) + 2) break;
         if (msg->sequence <= seq) break;
+        offset = *(uint32_t*)(recvPayload + strlen(recvPayload) + 1);
         if (filename = strrchr(recvPayload, '/')) filename++;
         else if (filename = strrchr(recvPayload, '\\')) filename++;
         else filename = recvPayload;
-        printf("receive file '%s' from %s start at %d\n",filename,inet_ntoa((struct in_addr)ip->saddr),msg->v1);
+        printf("receive file '%s' from %s start at %d\n",filename,inet_ntoa((struct in_addr)ip->saddr),offset);
         if (file) fclose(file);
         if ( (file = fopen(filename, "rb+")) == NULL ) {
           printf("file not exists or unable to open file\n");
           seq = 0;
           break;
         }
-        if (fseek(file, msg->v1, SEEK_SET) != 0) {
+        if (fseek(file, offset, SEEK_SET) != 0) {
           printf("unable to seek file\n");
           seq = 0;
           break;
