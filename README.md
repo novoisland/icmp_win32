@@ -10,7 +10,7 @@ a simple message and file transfer program via ICMP for windows (POC)
 - The receiver can handle only one file transfer at a time, do not try to send multiple files at same time.
 
 ## Build
-Download the win32 Tiny C Compiler (TCC) from [here](https://savannah.nongnu.org/projects/tinycc) and the full winapi package, extract them into same directory.
+Download the win32 Tiny C Compiler (TCC) and full winapi package from [here](https://savannah.nongnu.org/projects/tinycc), extract them into same directory.
 
 create library def file under the directory of source file
 
