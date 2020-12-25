@@ -39,3 +39,7 @@ send message to receiver, 1 stands for message type
 send file to receiver, 2 stands for file transfer
 
     icmp_send <IP address> 2 <file path>
+
+send file start at specific position
+
+    icmp_send <IP address> 2 <file path> <position>
