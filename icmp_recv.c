@@ -183,7 +183,6 @@ int main(int argc, char *argv[])
         break;
       case 1:
         //printf("got seq %d curr %d\n", msg->sequence, seq);
-        if (recvPayloadSize < 1) break;
         if (file == NULL) break;
         if (msg->sequence <= seq) break;
         if (msg->sequence != seq + 1) {
