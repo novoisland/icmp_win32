@@ -67,6 +67,7 @@ int main(int argc, char **argv)  {
       printf("\tUnable to allocate memory\n");
       return 1;
   }
+  pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
   
   msg->magic=ICMP_MSG_NUM;
   msg->type=atoi(argv[2]);
@@ -79,6 +80,7 @@ int main(int argc, char **argv)  {
   switch (msg->type) {
   case 1:
     dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, sendBuffer, sizeof (struct msghdr) + dataSize, NULL, ReplyBuffer, ReplySize, 1000);
+    //printf("reply size %d",pEchoReply->DataSize);
     break;
   case 2:
     if ( (file = fopen(argv[3], "rb")) == NULL ) {
@@ -109,7 +111,6 @@ int main(int argc, char **argv)  {
         msg->sequence++;
         dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, sendBuffer, sizeof (struct msghdr) + dataSize, NULL, ReplyBuffer, ReplySize, 50);
         if (dwRetVal > 0) {
-          pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
           if (pEchoReply->Status == 0)
             printf("sent package seq %d data size %d, return %d    \r", msg->sequence, dataSize, pEchoReply->Status);
           else
