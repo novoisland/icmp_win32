@@ -9,6 +9,7 @@
 struct msghdr
 {
   uint32_t  magic;
+  uint32_t  daddr;
   uint8_t   type;
   uint8_t   code;
   uint16_t  id;
@@ -70,6 +71,7 @@ int main(int argc, char **argv)  {
   pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
   
   msg->magic=ICMP_MSG_NUM;
+  msg->daddr=ipaddr;
   msg->type=atoi(argv[2]);
   msg->code=0;
   msg->id=GetTickCount();
