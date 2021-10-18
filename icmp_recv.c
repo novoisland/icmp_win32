@@ -55,6 +55,7 @@ struct icmphdr
 struct msghdr
 {
   uint32_t  magic;
+  uint32_t  daddr;
   uint8_t   type;
   uint8_t   code;
   uint16_t  id;
@@ -153,6 +154,7 @@ int main(int argc, char *argv[])
     //printf("src: %s, id: %x, seq: %x, all: %d\n", inet_ntoa((struct in_addr)ip->saddr), ntohs(icmp->un.echo.id), ntohs(icmp->un.echo.sequence), readSize);
     if ( readSize - ihl - sizeof (struct icmphdr) <= 0 ) continue;
     if ( msg->magic != ICMP_MSG_NUM ) continue;
+    if ( msg->daddr != if0.sin_addr.s_addr ) continue;
     recvPayloadSize = readSize - ihl - sizeof (struct icmphdr) - sizeof (struct msghdr);
     if (recvPayloadSize < 0) continue;
     recvPayload = (char *)(recvBuffer + ihl + sizeof (struct icmphdr) + sizeof (struct msghdr));
