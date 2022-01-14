@@ -66,7 +66,7 @@ struct msghdr
 
 int main(int argc, char *argv[])
 {
-  int recvPayloadSize, recvBufferSize = 32768, wBufferSize = 1024 * 512, wBufferPos = 0;
+  int recvPayloadSize, recvBufferSize = 32768, wBufferSize = 1024 * 512, wBufferPos = 0, wFilePos = 0;
   char *recvPayload, *recvBuffer, *filename, *wBuffer;
   int ihl, readSize;
   uint32_t seq = 0, offset = 0;
@@ -182,6 +182,7 @@ int main(int argc, char *argv[])
         }
         seq = msg->sequence;
         wBufferPos = 0;
+        wFilePos = 0;
         break;
       case 1:
         //printf("got seq %d curr %d\n", msg->sequence, seq);
@@ -196,7 +197,8 @@ int main(int argc, char *argv[])
           seq = 0;
           break;
         }
-        //printf("write seq %d size %d\n", msg->sequence, recvPayloadSize);
+        wFilePos += recvPayloadSize;
+        printf("get seq %d size %d, total %d      \r", msg->sequence, recvPayloadSize, wFilePos);
         if (wBufferPos + recvPayloadSize > wBufferSize) {
           fwrite(wBuffer, wBufferPos, 1, file);
           memcpy(wBuffer, recvPayload, recvPayloadSize);
@@ -220,7 +222,7 @@ int main(int argc, char *argv[])
         fclose(file);
         file = NULL;
         seq = 0;
-        printf("receive done\n");
+        printf("receive done                       \n");
         break;
       case 3:
         if (recvPayloadSize < sizeof(offset) + 2) break;
